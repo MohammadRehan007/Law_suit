@@ -1,0 +1,576 @@
+import { useEffect, useMemo, useState } from 'react'
+import { useDashboardStore } from '../stores/dashboardStore'
+
+const navItems = [
+  { label: 'Dashboard', active: true },
+  { label: 'Calendar' },
+  { label: 'Tasks' },
+  { label: 'Matters' },
+  { label: 'Contacts' },
+  { label: 'Activities' },
+  { label: 'Billing' },
+  { label: 'Accounts' },
+  { label: 'Documents' },
+  { label: 'Communications' },
+  { label: 'Reports' },
+  { label: 'App Integrations' },
+  { label: 'Settings' },
+]
+
+const statCards = [
+  { label: 'Active Matters', value: '23', accent: 'bg-indigo-500/10 text-indigo-700' },
+  { label: 'Pending Leads', value: '8', accent: 'bg-emerald-500/10 text-emerald-700' },
+  { label: 'Overdue Invoices', value: '4', accent: 'bg-rose-500/10 text-rose-700' },
+  { label: 'Upcoming Deadlines', value: '6', accent: 'bg-amber-500/10 text-amber-700' },
+  { label: 'Retainer Pending', value: '2', accent: 'bg-sky-500/10 text-sky-700' },
+]
+
+const firmFeedItems = [
+  { id: 'f1', title: 'Mohammad Rehan created Time Entry', subtitle: '06/19/2026 8:56 AM', extra: '20 minutes ago' },
+  { id: 'f2', title: 'Mohammad Rehan updated Time Entry', subtitle: '06/19/2026 9:07 AM', extra: '9 minutes ago' },
+  { id: 'f3', title: 'Mohammad Rehan removed Time Entry', subtitle: '06/19/2026 9:07 AM', extra: '9 minutes ago' },
+]
+
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  }).format(value)
+
+const durationLabel = (startedAt: number, stoppedAt: number | null) => {
+  const elapsed = (stoppedAt || Date.now()) - startedAt
+  const totalMinutes = Math.floor(elapsed / 60000)
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+  return `${hours}h ${minutes}m`
+}
+
+const Dashboard = () => {
+  const { matters, deadlines, invoices, leads, timeEntries, timer, startTimer, pauseTimer, resumeTimer, stopTimer, setTimerDescription, setTimerMatter, addTimeEntry } = useDashboardStore()
+  const [now, setNow] = useState(Date.now())
+  const [showTimekeeper, setShowTimekeeper] = useState(false)
+  const [showEntryModal, setShowEntryModal] = useState(false)
+  const [activeTab, setActiveTab] = useState<'personal' | 'firm' | 'feed'>('personal')
+  const [entryDescription, setEntryDescription] = useState('')
+  const [entryMatter, setEntryMatter] = useState('')
+  const [entryRate, setEntryRate] = useState(320)
+  const [entryDate, setEntryDate] = useState(new Date().toISOString().slice(0, 10))
+
+  const matterOptions = useMemo(() => matters.map((matter) => ({ label: matter.name, value: matter.id })), [matters])
+
+  const [entryHours, setEntryHours] = useState(1)
+
+  useEffect(() => {
+    if (!entryMatter && matterOptions.length) {
+      setEntryMatter(matterOptions[0].value)
+    }
+  }, [entryMatter, matterOptions])
+
+  const timerLabel = useMemo(() => {
+    if (!timer.startedAt) return '00:00:00'
+    const elapsed = (timer.pausedAt || now) - timer.startedAt
+    const hours = Math.floor(elapsed / 3600000)
+    const minutes = Math.floor((elapsed % 3600000) / 60000)
+    const seconds = Math.floor((elapsed % 60000) / 1000)
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+  }, [now, timer.pausedAt, timer.startedAt])
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const handleSaveEntry = () => {
+    const selectedMatter = matters.find((matter) => matter.id === entryMatter)
+    const startedDate = new Date(entryDate)
+    startedDate.setHours(9, 0, 0, 0)
+    const entry = {
+      id: `te-${Date.now()}`,
+      matter: selectedMatter?.name || 'Unassigned',
+      description: entryDescription,
+      startedAt: startedDate.getTime(),
+      stoppedAt: startedDate.getTime() + entryHours * 3600000,
+      rate: entryRate,
+    }
+    addTimeEntry(entry)
+    setShowEntryModal(false)
+    setEntryDescription('')
+    setEntryMatter(matterOptions[0]?.value || '')
+    setEntryRate(320)
+    setEntryDate(new Date().toISOString().slice(0, 10))
+    setEntryHours(1)
+  }
+
+  const upcomingDeadlines = useMemo(
+    () => deadlines.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()),
+    [deadlines],
+  )
+
+  const running = Boolean(timer.activeEntryId && !timer.pausedAt)
+  const paused = Boolean(timer.activeEntryId && timer.pausedAt)
+  const trackerStatus = running ? 'Running' : paused ? 'Paused' : timer.activeEntryId ? 'Stopped' : 'Ready'
+  const trackerStatusClasses = running
+    ? 'bg-emerald-100 text-emerald-700'
+    : paused
+    ? 'bg-amber-100 text-amber-700'
+    : 'bg-slate-100 text-slate-700'
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <div className="grid min-h-screen grid-cols-[280px_1fr]">
+        <aside className="border-r border-slate-200 bg-slate-950 text-slate-100">
+          <div className="flex h-full flex-col justify-between">
+            <div>
+              <div className="border-b border-slate-800 px-6 py-5">
+                <p className="text-sm uppercase tracking-[0.3em] text-slate-500">Law Office</p>
+                <h1 className="mt-3 text-2xl font-semibold text-white">Rehan & Co.</h1>
+              </div>
+              <nav className="space-y-1 px-4 py-6">
+                {navItems.map((item) => (
+                  <button
+                    key={item.label}
+                    className={`flex w-full items-center justify-between rounded-3xl px-4 py-3 text-left text-sm font-medium transition ${
+                      item.active ? 'bg-slate-800 text-white shadow-xl' : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </nav>
+            </div>
+            <div className="border-t border-slate-800 px-6 py-6">
+              <div className="rounded-3xl bg-slate-900 p-4 text-slate-300 shadow-inner">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Resource center</p>
+                <p className="mt-3 text-sm font-semibold text-white">Mohammad Rehan</p>
+                <p className="mt-1 text-xs text-slate-400">Law Office of Mohammad Rehan</p>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <main className="relative overflow-hidden">
+          <div className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur-md">
+            <div className="flex items-center justify-between gap-4 px-6 py-4">
+              <div className="flex items-center gap-4">
+                <button className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-100">
+                  Search law office...
+                </button>
+                <button
+                  className={`rounded-3xl px-4 py-3 text-sm font-semibold ${activeTab === 'personal' ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-700 hover:bg-slate-100'}`}
+                  onClick={() => setActiveTab('personal')}
+                >
+                  Personal Dashboard
+                </button>
+                <button
+                  className={`rounded-3xl px-4 py-3 text-sm font-semibold ${activeTab === 'firm' ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-700 hover:bg-slate-100'}`}
+                  onClick={() => setActiveTab('firm')}
+                >
+                  Firm Dashboard
+                </button>
+                <button
+                  className={`rounded-3xl px-4 py-3 text-sm font-semibold ${activeTab === 'feed' ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-700 hover:bg-slate-100'}`}
+                  onClick={() => setActiveTab('feed')}
+                >
+                  Firm Feed
+                </button>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="relative inline-flex items-center gap-3">
+                  <button
+                    className="inline-flex items-center gap-2 rounded-3xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-slate-800"
+                    onClick={() => setShowTimekeeper((open) => !open)}
+                  >
+                    <span className={`inline-flex h-2.5 w-2.5 rounded-full ${running ? 'bg-emerald-400' : paused ? 'bg-amber-400' : 'bg-slate-400'}`} />
+                    {timerLabel}
+                  </button>
+                  {showTimekeeper && (
+                    <div className="absolute right-0 top-full z-30 mt-3 w-[360px] rounded-[32px] border border-slate-200 bg-white p-5 shadow-2xl">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Timekeeper</p>
+                          <p className="mt-2 text-lg font-semibold text-slate-950">Tracker details</p>
+                        </div>
+                        <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${trackerStatusClasses}`}>{trackerStatus}</span>
+                      </div>
+                      <div className="mt-4 rounded-3xl bg-slate-50 p-4">
+                        <p className="text-sm text-slate-500">Current session</p>
+                        <p className="mt-2 text-2xl font-semibold text-slate-950">{timerLabel}</p>
+                        <p className="mt-2 text-sm text-slate-500">{timer.selectedMatter ? matters.find((matter) => matter.id === timer.selectedMatter)?.name : 'No matter selected'}</p>
+                      </div>
+                      <div className="mt-4 space-y-4">
+                        <div>
+                          <label className="text-sm font-medium text-slate-700">Matter</label>
+                          <select
+                            className="mt-2 w-full rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-slate-400 focus:outline-none"
+                            value={timer.selectedMatter || matterOptions[0]?.value || ''}
+                            onChange={(event) => setTimerMatter(event.target.value)}
+                          >
+                            {matterOptions.map((option) => (
+                              <option key={option.value} value={option.value}>{option.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-slate-700">Description</label>
+                          <input
+                            className="mt-2 w-full rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-slate-400 focus:outline-none"
+                            placeholder="Describe what you’re working on"
+                            value={timer.description}
+                            onChange={(event) => setTimerDescription(event.target.value)}
+                          />
+                        </div>
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-3">
+                        <button
+                          className={`rounded-3xl px-4 py-3 text-sm font-semibold text-white shadow-sm ${running ? 'bg-emerald-600 hover:bg-emerald-700' : paused ? 'bg-amber-500 hover:bg-amber-600' : 'bg-slate-950 hover:bg-slate-800'}`}
+                          onClick={() => {
+                            if (running) pauseTimer()
+                            else if (paused) resumeTimer()
+                            else startTimer(timer.selectedMatter || matterOptions[0]?.value || '', timer.description)
+                          }}
+                        >
+                          {running ? 'Pause' : paused ? 'Resume' : 'Start'}
+                        </button>
+                        {timer.activeEntryId && (
+                          <button
+                            className="rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-950 shadow-sm hover:bg-slate-100"
+                            onClick={stopTimer}
+                          >
+                            Stop
+                          </button>
+                        )}
+                        <button
+                          className="rounded-3xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-sm"
+                          onClick={() => {
+                            setShowEntryModal(true)
+                            setShowTimekeeper(false)
+                          }}
+                        >
+                          Add manual entry
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <button
+                  className={`rounded-3xl px-4 py-3 text-sm font-semibold text-white shadow-sm ${running ? 'bg-emerald-600 hover:bg-emerald-700' : paused ? 'bg-amber-500 hover:bg-amber-600' : 'bg-slate-950 hover:bg-slate-800'}`}
+                  onClick={() => {
+                    if (running) pauseTimer()
+                    else if (paused) resumeTimer()
+                    else startTimer(matterOptions[0]?.value || '', '')
+                  }}
+                >
+                  {running ? 'Pause' : paused ? 'Resume' : 'Start'}
+                </button>
+                {timer.activeEntryId && (
+                  <button
+                    className="rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-950 shadow-sm hover:bg-slate-100"
+                    onClick={stopTimer}
+                  >
+                    Stop
+                  </button>
+                )}
+                <button className="rounded-3xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-sm" onClick={() => setShowEntryModal(true)}>
+                  Create new +
+                </button>
+                <button className="rounded-full bg-slate-950 p-3 text-white shadow-sm">🔔</button>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-8 px-6 py-8 lg:px-10">
+            {showEntryModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-8">
+                <div className="w-full max-w-2xl overflow-hidden rounded-[32px] bg-white p-8 shadow-2xl">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">New time entry</p>
+                      <h2 className="mt-2 text-2xl font-semibold text-slate-950">Create manual entry</h2>
+                    </div>
+                    <button className="text-slate-500 hover:text-slate-900" onClick={() => setShowEntryModal(false)}>
+                      ✕
+                    </button>
+                  </div>
+                  <div className="mt-6 space-y-5">
+                    <div>
+                      <label className="text-sm font-medium text-slate-700">Matter</label>
+                      <select
+                        className="mt-2 w-full rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-slate-400 focus:outline-none"
+                        value={entryMatter}
+                        onChange={(event) => setEntryMatter(event.target.value)}
+                      >
+                        {matterOptions.map((option) => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-slate-700">Description</label>
+                      <textarea
+                        className="mt-2 w-full rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-slate-400 focus:outline-none"
+                        rows={4}
+                        value={entryDescription}
+                        onChange={(event) => setEntryDescription(event.target.value)}
+                        placeholder="Summarize the work performed"
+                      />
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <div>
+                        <label className="text-sm font-medium text-slate-700">Date</label>
+                        <input
+                          type="date"
+                          className="mt-2 w-full rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-slate-400 focus:outline-none"
+                          value={entryDate}
+                          onChange={(event) => setEntryDate(event.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-slate-700">Hours</label>
+                        <input
+                          type="number"
+                          min={0.25}
+                          step={0.25}
+                          className="mt-2 w-full rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-slate-400 focus:outline-none"
+                          value={entryHours}
+                          onChange={(event) => setEntryHours(Number(event.target.value))}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-slate-700">Rate</label>
+                        <input
+                          type="number"
+                          min={0}
+                          className="mt-2 w-full rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-slate-400 focus:outline-none"
+                          value={entryRate}
+                          onChange={(event) => setEntryRate(Number(event.target.value))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-8 flex flex-wrap items-center justify-end gap-3">
+                    <button
+                      className="rounded-3xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                      onClick={() => setShowEntryModal(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="rounded-3xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800"
+                      onClick={handleSaveEntry}
+                    >
+                      Save entry
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'personal' && (
+              <>
+                <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-soft">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <h1 className="text-2xl font-semibold text-slate-950">Today's Agenda</h1>
+                    </div>
+                    <button className="text-sm font-semibold text-slate-500 hover:text-slate-900">Hide</button>
+                  </div>
+                  <div className="mt-6 grid gap-4 lg:grid-cols-2">
+                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+                      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Tasks Due Today</p>
+                      <p className="mt-4 text-5xl font-semibold text-slate-950">0</p>
+                      <p className="mt-2 text-sm text-slate-600">You have no tasks due today</p>
+                    </div>
+                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+                      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Calendar Events</p>
+                      <p className="mt-4 text-5xl font-semibold text-slate-950">0</p>
+                      <p className="mt-2 text-sm text-slate-600">You have no events scheduled for today</p>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
+                  <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-soft">
+                    <h2 className="text-xl font-semibold text-slate-950">Hourly Metrics for Mohammad Rehan</h2>
+                    <div className="mt-6 rounded-[32px] border border-slate-200 bg-slate-50 p-8 text-center text-slate-700">
+                      <p className="text-sm uppercase tracking-[0.2em] text-slate-500">Billable Hours Target</p>
+                      <p className="mt-4 text-sm text-slate-600">You haven't set up your billing target</p>
+                      <button className="mt-6 rounded-3xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800">
+                        Set up your target
+                      </button>
+                    </div>
+                  </div>
+                  <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-soft">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Billing Metrics for Firm</p>
+                        <h2 className="mt-2 text-xl font-semibold text-slate-950">Billing Metrics for Firm</h2>
+                      </div>
+                    </div>
+                    <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                      <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                        <p className="text-sm font-semibold text-slate-500">Draft Bills</p>
+                        <div className="mt-3 flex items-center justify-between gap-3 text-2xl font-semibold text-slate-950">
+                          <span>0</span>
+                          <a href="#" className="inline-flex items-center gap-2 text-xs font-medium text-sky-600 underline decoration-sky-600 decoration-2 underline-offset-2">
+                            <span>View</span>
+                            <span aria-hidden="true">👁</span>
+                          </a>
+                        </div>
+                        <p className="mt-2 text-sm text-slate-500">(<span className="text-slate-800">Create new bills</span>)</p>
+                      </div>
+                      <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-sm font-semibold text-slate-500">Total in Draft</p>
+                          <a href="#" className="inline-flex items-center gap-2 text-xs font-medium text-sky-600 underline decoration-sky-600 decoration-2 underline-offset-2">
+                            <span>View</span>
+                            <span aria-hidden="true">👁</span>
+                          </a>
+                        </div>
+                        <p className="mt-3 text-2xl font-semibold text-slate-950">-</p>
+                      </div>
+                      <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                        <p className="text-sm font-semibold text-slate-500">Unpaid Bills</p>
+                        <div className="mt-3 flex items-center justify-between gap-3 text-2xl font-semibold text-slate-950">
+                          <span>0</span>
+                          <a href="#" className="inline-flex items-center gap-2 text-xs font-medium text-sky-600 underline decoration-sky-600 decoration-2 underline-offset-2">
+                            <span>View</span>
+                            <span aria-hidden="true">👁</span>
+                          </a>
+                        </div>
+                        <p className="mt-2 text-sm text-slate-500">(<span className="text-slate-800">Approve from Draft or Pending Approval</span>)</p>
+                      </div>
+                      <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-sm font-semibold text-slate-500">Total in Unpaid</p>
+                          <a href="#" className="inline-flex items-center gap-2 text-xs font-medium text-sky-600 underline decoration-sky-600 decoration-2 underline-offset-2">
+                            <span>View</span>
+                            <span aria-hidden="true">👁</span>
+                          </a>
+                        </div>
+                        <p className="mt-3 text-2xl font-semibold text-slate-950">-</p>
+                      </div>
+                      <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-sm font-semibold text-slate-500">Overdue Bills</p>
+                          <a href="#" className="inline-flex items-center gap-2 text-xs font-medium text-sky-600 underline decoration-sky-600 decoration-2 underline-offset-2">
+                            <span>View</span>
+                            <span aria-hidden="true">👁</span>
+                          </a>
+                        </div>
+                        <p className="mt-3 text-2xl font-semibold text-rose-600">0</p>
+                      </div>
+                      <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-sm font-semibold text-slate-500">Total in Overdue</p>
+                          <a href="#" className="inline-flex items-center gap-2 text-xs font-medium text-sky-600 underline decoration-sky-600 decoration-2 underline-offset-2">
+                            <span>View</span>
+                            <span aria-hidden="true">👁</span>
+                          </a>
+                        </div>
+                        <p className="mt-3 text-2xl font-semibold text-slate-950">-</p>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              </>
+            )}
+
+            {activeTab === 'firm' && (
+              <section className="space-y-6">
+                <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-soft">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                      <p className="text-sm uppercase tracking-[0.2em] text-slate-500">Firm overview</p>
+                      <h2 className="mt-2 text-2xl font-semibold text-slate-950">Firm overview</h2>
+                      <p className="mt-2 text-sm text-slate-500">Data last refreshed 4 hours ago (06/19/2026 5:30 AM IST)</p>
+                    </div>
+                    <div className="rounded-3xl bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm">$</div>
+                  </div>
+                </div>
+                <div className="grid gap-6">
+                  <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-soft">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Utilization</p>
+                      <span className="text-xs text-slate-500">Activities dated Jan 1 - Jun 19, 2026</span>
+                    </div>
+                    <div className="mt-6 grid gap-4 lg:grid-cols-[0.7fr_1.3fr]">
+                      <div className="rounded-3xl border border-slate-200 bg-slate-50 p-10 text-center text-slate-500">
+                        <p className="font-semibold text-slate-950">Rate average</p>
+                        <p className="mt-5 text-sm">You have no data to display for this period</p>
+                      </div>
+                      <div className="rounded-3xl border border-slate-200 bg-slate-50 p-10 text-center text-slate-500">
+                        <p className="font-semibold text-slate-950">Monthly</p>
+                        <p className="mt-5 text-sm">You have no data to display for this period</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-soft">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Realization</p>
+                      <span className="text-xs text-slate-500">Activities dated Jan 1 - Jun 19, 2026</span>
+                    </div>
+                    <div className="mt-6 grid gap-4 lg:grid-cols-[0.7fr_1.3fr]">
+                      <div className="rounded-3xl border border-slate-200 bg-slate-50 p-10 text-center text-slate-500">
+                        <p className="font-semibold text-slate-950">Rate average</p>
+                        <p className="mt-5 text-sm">You have no data to display for this period</p>
+                      </div>
+                      <div className="rounded-3xl border border-slate-200 bg-slate-50 p-10 text-center text-slate-500">
+                        <p className="font-semibold text-slate-950">Monthly</p>
+                        <p className="mt-5 text-sm">You have no data to display for this period</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-soft">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Collection</p>
+                      <span className="text-xs text-slate-500">Activities dated Jan 1 - Jun 19, 2026</span>
+                    </div>
+                    <div className="mt-6 grid gap-4 lg:grid-cols-[0.7fr_1.3fr]">
+                      <div className="rounded-3xl border border-slate-200 bg-slate-50 p-10 text-center text-slate-500">
+                        <p className="font-semibold text-slate-950">Rate average</p>
+                        <p className="mt-5 text-sm">You have no data to display for this period</p>
+                      </div>
+                      <div className="rounded-3xl border border-slate-200 bg-slate-50 p-10 text-center text-slate-500">
+                        <p className="font-semibold text-slate-950">Monthly</p>
+                        <p className="mt-5 text-sm">You have no data to display for this period</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {activeTab === 'feed' && (
+              <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-soft">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <p className="text-sm uppercase tracking-[0.2em] text-slate-500">Firm Feed</p>
+                    <h2 className="mt-2 text-2xl font-semibold text-slate-950">Firm Feed</h2>
+                  </div>
+                  <button className="rounded-3xl bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">Filter</button>
+                </div>
+                <div className="mt-4 rounded-3xl bg-slate-50 p-4 text-sm text-slate-700">
+                  Firm Feed now shows the past 14 days by default. Use the Filter menu to adjust the date range.
+                </div>
+                <div className="mt-6 space-y-4">
+                  {firmFeedItems.map((item) => (
+                    <div key={item.id} className="flex items-start gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-3xl bg-slate-100 text-sm font-semibold text-slate-700">MR</div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-950">{item.title}</p>
+                        <p className="mt-1 text-sm text-slate-500">{item.subtitle}</p>
+                      </div>
+                      <div className="ml-auto text-sm text-slate-500">{item.extra}</div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
+        </main>
+      </div>
+    </div>
+  )
+}
+
+export default Dashboard
