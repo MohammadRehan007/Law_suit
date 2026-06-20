@@ -279,8 +279,9 @@ const Dashboard = () => {
                               setShowTimekeeper(false)
                             }}
                           >
-                          Add manual entry
-                        </button>
+                            Add manual entry
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}
