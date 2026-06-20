@@ -214,18 +214,20 @@ const Dashboard = () => {
                     <span className="sm:hidden">{timerLabel.split(':').slice(1).join(':')}</span>
                   </button>
                   {showTimekeeper && (
-                    <div className="absolute right-0 top-full z-30 mt-3 w-full max-w-md rounded-[32px] border border-slate-200 bg-white p-4 shadow-2xl sm:p-5">
-                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
+                    <div className="absolute right-0 top-full z-30 mt-3 w-[calc(100vw-2rem)] max-w-lg rounded-[32px] border border-slate-200 bg-white p-4 shadow-2xl sm:p-5">
+                      <div className="flex flex-col items-start justify-between gap-3">
+                        <div className="w-full">
                           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Timekeeper</p>
-                          <p className="mt-2 text-lg font-semibold text-slate-950">Tracker details</p>
+                          <div className="mt-2 flex items-center justify-between gap-3">
+                            <p className="text-lg font-semibold text-slate-950">Tracker details</p>
+                            <span className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${trackerStatusClasses}`}>{trackerStatus}</span>
+                          </div>
                         </div>
-                        <span className={`w-fit rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${trackerStatusClasses}`}>{trackerStatus}</span>
                       </div>
                       <div className="mt-4 rounded-3xl bg-slate-50 p-4">
                         <p className="text-sm text-slate-500">Current session</p>
-                        <p className="mt-2 text-2xl font-semibold text-slate-950">{timerLabel}</p>
-                        <p className="mt-2 text-sm text-slate-500">{timer.selectedMatter ? matters.find((matter) => matter.id === timer.selectedMatter)?.name : 'No matter selected'}</p>
+                        <p className="mt-2 text-xl font-semibold text-slate-950 sm:text-2xl">{timerLabel}</p>
+                        <p className="mt-2 truncate text-sm text-slate-500">{timer.selectedMatter ? matters.find((matter) => matter.id === timer.selectedMatter)?.name : 'No matter selected'}</p>
                       </div>
                       <div className="mt-4 space-y-4">
                         <div>
