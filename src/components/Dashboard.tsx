@@ -59,6 +59,8 @@ const Dashboard = () => {
   const matterOptions = useMemo(() => matters.map((matter) => ({ label: matter.name, value: matter.id })), [matters])
 
   const [entryHours, setEntryHours] = useState(1)
+  const [showSidebar, setShowSidebar] = useState(false)
+  const [showNavMenu, setShowNavMenu] = useState(false)
 
   useEffect(() => {
     if (!entryMatter && matterOptions.length) {
@@ -117,15 +119,18 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="grid min-h-screen grid-cols-[280px_1fr]">
-        <aside className="border-r border-slate-200 bg-slate-950 text-slate-100">
+      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[280px_1fr]">
+        {/* Sidebar - Hidden on mobile, shown on lg+ */}
+        <aside className={`fixed inset-y-0 left-0 z-40 w-[280px] transform border-r border-slate-200 bg-slate-950 text-slate-100 transition-transform duration-300 lg:relative lg:translate-x-0 ${
+          showSidebar ? 'translate-x-0' : '-translate-x-full'
+        }`}>
           <div className="flex h-full flex-col justify-between">
             <div>
               <div className="border-b border-slate-800 px-6 py-5">
                 <p className="text-sm uppercase tracking-[0.3em] text-slate-500">Law Office</p>
                 <h1 className="mt-3 text-2xl font-semibold text-white">Rehan & Co.</h1>
               </div>
-              <nav className="space-y-1 px-4 py-6">
+              <nav className="space-y-1 overflow-y-auto px-4 py-6">
                 {navItems.map((item) => (
                   <button
                     key={item.label}
@@ -148,43 +153,68 @@ const Dashboard = () => {
           </div>
         </aside>
 
+        {/* Overlay for mobile */}
+        {showSidebar && (
+          <div
+            className="fixed inset-0 z-30 bg-slate-950/40 lg:hidden"
+            onClick={() => setShowSidebar(false)}
+          />
+        )}
+
         <main className="relative overflow-hidden">
           <div className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur-md">
-            <div className="flex items-center justify-between gap-4 px-6 py-4">
-              <div className="flex items-center gap-4">
-                <button className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-100">
+            <div className="flex flex-col gap-3 px-4 py-3 sm:px-6 sm:py-4 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+              {/* Top row - Menu and Search */}
+              <div className="flex items-center gap-3 lg:gap-4">
+                <button
+                  onClick={() => setShowSidebar(!showSidebar)}
+                  className="rounded-lg p-2 text-slate-700 hover:bg-slate-100 lg:hidden"
+                  aria-label="Toggle menu"
+                >
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
+                <button className="hidden flex-1 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-100 sm:block md:flex-none md:w-auto">
                   Search law office...
                 </button>
+              </div>
+
+              {/* Dashboard tabs - Stack on mobile */}
+              <div className="flex flex-wrap gap-2 lg:gap-0">
                 <button
-                  className={`rounded-3xl px-4 py-3 text-sm font-semibold ${activeTab === 'personal' ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-700 hover:bg-slate-100'}`}
+                  className={`flex-1 rounded-3xl px-3 py-2 text-xs font-semibold sm:flex-none sm:px-4 sm:py-3 sm:text-sm ${activeTab === 'personal' ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-700 hover:bg-slate-100'}`}
                   onClick={() => setActiveTab('personal')}
                 >
-                  Personal Dashboard
+                  Personal
                 </button>
                 <button
-                  className={`rounded-3xl px-4 py-3 text-sm font-semibold ${activeTab === 'firm' ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-700 hover:bg-slate-100'}`}
+                  className={`flex-1 rounded-3xl px-3 py-2 text-xs font-semibold sm:flex-none sm:px-4 sm:py-3 sm:text-sm ${activeTab === 'firm' ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-700 hover:bg-slate-100'}`}
                   onClick={() => setActiveTab('firm')}
                 >
-                  Firm Dashboard
+                  Firm
                 </button>
                 <button
-                  className={`rounded-3xl px-4 py-3 text-sm font-semibold ${activeTab === 'feed' ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-700 hover:bg-slate-100'}`}
+                  className={`flex-1 rounded-3xl px-3 py-2 text-xs font-semibold sm:flex-none sm:px-4 sm:py-3 sm:text-sm ${activeTab === 'feed' ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-700 hover:bg-slate-100'}`}
                   onClick={() => setActiveTab('feed')}
                 >
-                  Firm Feed
+                  Feed
                 </button>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="relative inline-flex items-center gap-3">
+
+              {/* Action buttons - Stack on mobile */}
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <div className="relative inline-flex">
                   <button
-                    className="inline-flex items-center gap-2 rounded-3xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-slate-800"
+                    className="inline-flex items-center gap-2 rounded-3xl bg-slate-950 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-slate-800 sm:px-4 sm:py-3 sm:text-sm"
                     onClick={() => setShowTimekeeper((open) => !open)}
                   >
                     <span className={`inline-flex h-2.5 w-2.5 rounded-full ${running ? 'bg-emerald-400' : paused ? 'bg-amber-400' : 'bg-slate-400'}`} />
-                    {timerLabel}
+                    <span className="hidden sm:inline">{timerLabel}</span>
+                    <span className="sm:hidden">{timerLabel.split(':').slice(1).join(':')}</span>
                   </button>
                   {showTimekeeper && (
-                    <div className="absolute right-0 top-full z-30 mt-3 w-[360px] rounded-[32px] border border-slate-200 bg-white p-5 shadow-2xl">
+                    <div className="absolute right-0 top-full z-30 mt-3 w-full max-w-sm rounded-[32px] border border-slate-200 bg-white p-4 shadow-2xl sm:p-5">
                       <div className="flex items-center justify-between gap-3">
                         <div>
                           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Timekeeper</p>
@@ -253,7 +283,7 @@ const Dashboard = () => {
                   )}
                 </div>
                 <button
-                  className={`rounded-3xl px-4 py-3 text-sm font-semibold text-white shadow-sm ${running ? 'bg-emerald-600 hover:bg-emerald-700' : paused ? 'bg-amber-500 hover:bg-amber-600' : 'bg-slate-950 hover:bg-slate-800'}`}
+                  className={`hidden rounded-3xl px-3 py-2 text-xs font-semibold text-white shadow-sm sm:inline-block sm:px-4 sm:py-3 sm:text-sm ${running ? 'bg-emerald-600 hover:bg-emerald-700' : paused ? 'bg-amber-500 hover:bg-amber-600' : 'bg-slate-950 hover:bg-slate-800'}`}
                   onClick={() => {
                     if (running) pauseTimer()
                     else if (paused) resumeTimer()
@@ -264,28 +294,28 @@ const Dashboard = () => {
                 </button>
                 {timer.activeEntryId && (
                   <button
-                    className="rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-950 shadow-sm hover:bg-slate-100"
+                    className="hidden rounded-3xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-950 shadow-sm hover:bg-slate-100 sm:inline-block sm:px-4 sm:py-3 sm:text-sm"
                     onClick={stopTimer}
                   >
                     Stop
                   </button>
                 )}
-                <button className="rounded-3xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-sm" onClick={() => setShowEntryModal(true)}>
-                  Create new +
+                <button className="rounded-3xl bg-slate-950 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-slate-800 sm:px-4 sm:py-3 sm:text-sm" onClick={() => setShowEntryModal(true)}>
+                  Create +
                 </button>
-                <button className="rounded-full bg-slate-950 p-3 text-white shadow-sm">🔔</button>
+                <button className="rounded-full bg-slate-950 p-2 text-white shadow-sm hover:bg-slate-800 sm:p-3">🔔</button>
               </div>
             </div>
           </div>
 
-          <div className="space-y-8 px-6 py-8 lg:px-10">
+          <div className="space-y-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-10">
             {showEntryModal && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-8">
-                <div className="w-full max-w-2xl overflow-hidden rounded-[32px] bg-white p-8 shadow-2xl">
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-6 sm:px-0 sm:py-8">
+                <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[32px] bg-white p-6 shadow-2xl sm:p-8">
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <p className="text-xs uppercase tracking-[0.2em] text-slate-500">New time entry</p>
-                      <h2 className="mt-2 text-2xl font-semibold text-slate-950">Create manual entry</h2>
+                      <h2 className="mt-2 text-xl font-semibold text-slate-950 sm:text-2xl">Create manual entry</h2>
                     </div>
                     <button className="text-slate-500 hover:text-slate-900" onClick={() => setShowEntryModal(false)}>
                       ✕
@@ -314,7 +344,7 @@ const Dashboard = () => {
                         placeholder="Summarize the work performed"
                       />
                     </div>
-                    <div className="grid gap-4 sm:grid-cols-3">
+                    <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
                       <div>
                         <label className="text-sm font-medium text-slate-700">Date</label>
                         <input
@@ -367,31 +397,31 @@ const Dashboard = () => {
 
             {activeTab === 'personal' && (
               <>
-                <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-soft">
-                  <div className="flex items-center justify-between gap-4">
+                <section className="rounded-[32px] border border-slate-200 bg-white p-4 shadow-soft sm:p-6">
+                  <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-4">
                     <div>
-                      <h1 className="text-2xl font-semibold text-slate-950">Today's Agenda</h1>
+                      <h1 className="text-xl font-semibold text-slate-950 sm:text-2xl">Today's Agenda</h1>
                     </div>
                     <button className="text-sm font-semibold text-slate-500 hover:text-slate-900">Hide</button>
                   </div>
-                  <div className="mt-6 grid gap-4 lg:grid-cols-2">
-                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+                  <div className="mt-6 grid gap-4 grid-cols-1 sm:grid-cols-2">
+                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 sm:p-6">
                       <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Tasks Due Today</p>
-                      <p className="mt-4 text-5xl font-semibold text-slate-950">0</p>
+                      <p className="mt-4 text-4xl font-semibold text-slate-950 sm:text-5xl">0</p>
                       <p className="mt-2 text-sm text-slate-600">You have no tasks due today</p>
                     </div>
-                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 sm:p-6">
                       <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Calendar Events</p>
-                      <p className="mt-4 text-5xl font-semibold text-slate-950">0</p>
+                      <p className="mt-4 text-4xl font-semibold text-slate-950 sm:text-5xl">0</p>
                       <p className="mt-2 text-sm text-slate-600">You have no events scheduled for today</p>
                     </div>
                   </div>
                 </section>
 
-                <section className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
-                  <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-soft">
-                    <h2 className="text-xl font-semibold text-slate-950">Hourly Metrics for Mohammad Rehan</h2>
-                    <div className="mt-6 rounded-[32px] border border-slate-200 bg-slate-50 p-8 text-center text-slate-700">
+                <section className="grid gap-6 grid-cols-1 lg:grid-cols-[1.5fr_1fr]">
+                  <div className="rounded-[32px] border border-slate-200 bg-white p-4 shadow-soft sm:p-6">
+                    <h2 className="text-lg font-semibold text-slate-950 sm:text-xl">Hourly Metrics for Mohammad Rehan</h2>
+                    <div className="mt-6 rounded-[32px] border border-slate-200 bg-slate-50 p-6 text-center text-slate-700 sm:p-8">
                       <p className="text-sm uppercase tracking-[0.2em] text-slate-500">Billable Hours Target</p>
                       <p className="mt-4 text-sm text-slate-600">You haven't set up your billing target</p>
                       <button className="mt-6 rounded-3xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800">
@@ -399,24 +429,24 @@ const Dashboard = () => {
                       </button>
                     </div>
                   </div>
-                  <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-soft">
-                    <div className="flex items-center justify-between gap-3">
+                  <div className="rounded-[32px] border border-slate-200 bg-white p-4 shadow-soft sm:p-6">
+                    <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-3">
                       <div>
                         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Billing Metrics for Firm</p>
-                        <h2 className="mt-2 text-xl font-semibold text-slate-950">Billing Metrics for Firm</h2>
+                        <h2 className="mt-2 text-lg font-semibold text-slate-950 sm:text-xl">Billing Metrics for Firm</h2>
                       </div>
                     </div>
-                    <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                    <div className="mt-6 grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
                       <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
                         <p className="text-sm font-semibold text-slate-500">Draft Bills</p>
-                        <div className="mt-3 flex items-center justify-between gap-3 text-2xl font-semibold text-slate-950">
+                        <div className="mt-3 flex items-center justify-between gap-3 text-xl font-semibold text-slate-950 sm:text-2xl">
                           <span>0</span>
                           <a href="#" className="inline-flex items-center gap-2 text-xs font-medium text-sky-600 underline decoration-sky-600 decoration-2 underline-offset-2">
                             <span>View</span>
                             <span aria-hidden="true">👁</span>
                           </a>
                         </div>
-                        <p className="mt-2 text-sm text-slate-500">(<span className="text-slate-800">Create new bills</span>)</p>
+                        <p className="mt-2 text-xs text-slate-500 sm:text-sm">(<span className="text-slate-800">Create new bills</span>)</p>
                       </div>
                       <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
                         <div className="flex items-center justify-between gap-3">
@@ -426,18 +456,18 @@ const Dashboard = () => {
                             <span aria-hidden="true">👁</span>
                           </a>
                         </div>
-                        <p className="mt-3 text-2xl font-semibold text-slate-950">-</p>
+                        <p className="mt-3 text-xl font-semibold text-slate-950 sm:text-2xl">-</p>
                       </div>
                       <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
                         <p className="text-sm font-semibold text-slate-500">Unpaid Bills</p>
-                        <div className="mt-3 flex items-center justify-between gap-3 text-2xl font-semibold text-slate-950">
+                        <div className="mt-3 flex items-center justify-between gap-3 text-xl font-semibold text-slate-950 sm:text-2xl">
                           <span>0</span>
                           <a href="#" className="inline-flex items-center gap-2 text-xs font-medium text-sky-600 underline decoration-sky-600 decoration-2 underline-offset-2">
                             <span>View</span>
                             <span aria-hidden="true">👁</span>
                           </a>
                         </div>
-                        <p className="mt-2 text-sm text-slate-500">(<span className="text-slate-800">Approve from Draft or Pending Approval</span>)</p>
+                        <p className="mt-2 text-xs text-slate-500 sm:text-sm">(<span className="text-slate-800">Approve from Draft or Pending Approval</span>)</p>
                       </div>
                       <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
                         <div className="flex items-center justify-between gap-3">
@@ -447,7 +477,7 @@ const Dashboard = () => {
                             <span aria-hidden="true">👁</span>
                           </a>
                         </div>
-                        <p className="mt-3 text-2xl font-semibold text-slate-950">-</p>
+                        <p className="mt-3 text-xl font-semibold text-slate-950 sm:text-2xl">-</p>
                       </div>
                       <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
                         <div className="flex items-center justify-between gap-3">
@@ -457,7 +487,7 @@ const Dashboard = () => {
                             <span aria-hidden="true">👁</span>
                           </a>
                         </div>
-                        <p className="mt-3 text-2xl font-semibold text-rose-600">0</p>
+                        <p className="mt-3 text-xl font-semibold text-rose-600 sm:text-2xl">0</p>
                       </div>
                       <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
                         <div className="flex items-center justify-between gap-3">
@@ -467,7 +497,7 @@ const Dashboard = () => {
                             <span aria-hidden="true">👁</span>
                           </a>
                         </div>
-                        <p className="mt-3 text-2xl font-semibold text-slate-950">-</p>
+                        <p className="mt-3 text-xl font-semibold text-slate-950 sm:text-2xl">-</p>
                       </div>
                     </div>
                   </div>
@@ -477,60 +507,60 @@ const Dashboard = () => {
 
             {activeTab === 'firm' && (
               <section className="space-y-6">
-                <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-soft">
+                <div className="rounded-[32px] border border-slate-200 bg-white p-4 shadow-soft sm:p-6">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                       <p className="text-sm uppercase tracking-[0.2em] text-slate-500">Firm overview</p>
-                      <h2 className="mt-2 text-2xl font-semibold text-slate-950">Firm overview</h2>
-                      <p className="mt-2 text-sm text-slate-500">Data last refreshed 4 hours ago (06/19/2026 5:30 AM IST)</p>
+                      <h2 className="mt-2 text-xl font-semibold text-slate-950 sm:text-2xl">Firm overview</h2>
+                      <p className="mt-2 text-xs text-slate-500 sm:text-sm">Data last refreshed 4 hours ago (06/19/2026 5:30 AM IST)</p>
                     </div>
                     <div className="rounded-3xl bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm">$</div>
                   </div>
                 </div>
                 <div className="grid gap-6">
-                  <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-soft">
-                    <div className="flex items-center justify-between gap-3">
+                  <div className="rounded-[32px] border border-slate-200 bg-white p-4 shadow-soft sm:p-6">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Utilization</p>
                       <span className="text-xs text-slate-500">Activities dated Jan 1 - Jun 19, 2026</span>
                     </div>
-                    <div className="mt-6 grid gap-4 lg:grid-cols-[0.7fr_1.3fr]">
-                      <div className="rounded-3xl border border-slate-200 bg-slate-50 p-10 text-center text-slate-500">
+                    <div className="mt-6 grid gap-4 grid-cols-1 lg:grid-cols-[0.7fr_1.3fr]">
+                      <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 text-center text-slate-500 sm:p-10">
                         <p className="font-semibold text-slate-950">Rate average</p>
                         <p className="mt-5 text-sm">You have no data to display for this period</p>
                       </div>
-                      <div className="rounded-3xl border border-slate-200 bg-slate-50 p-10 text-center text-slate-500">
+                      <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 text-center text-slate-500 sm:p-10">
                         <p className="font-semibold text-slate-950">Monthly</p>
                         <p className="mt-5 text-sm">You have no data to display for this period</p>
                       </div>
                     </div>
                   </div>
-                  <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-soft">
-                    <div className="flex items-center justify-between gap-3">
+                  <div className="rounded-[32px] border border-slate-200 bg-white p-4 shadow-soft sm:p-6">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Realization</p>
                       <span className="text-xs text-slate-500">Activities dated Jan 1 - Jun 19, 2026</span>
                     </div>
-                    <div className="mt-6 grid gap-4 lg:grid-cols-[0.7fr_1.3fr]">
-                      <div className="rounded-3xl border border-slate-200 bg-slate-50 p-10 text-center text-slate-500">
+                    <div className="mt-6 grid gap-4 grid-cols-1 lg:grid-cols-[0.7fr_1.3fr]">
+                      <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 text-center text-slate-500 sm:p-10">
                         <p className="font-semibold text-slate-950">Rate average</p>
                         <p className="mt-5 text-sm">You have no data to display for this period</p>
                       </div>
-                      <div className="rounded-3xl border border-slate-200 bg-slate-50 p-10 text-center text-slate-500">
+                      <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 text-center text-slate-500 sm:p-10">
                         <p className="font-semibold text-slate-950">Monthly</p>
                         <p className="mt-5 text-sm">You have no data to display for this period</p>
                       </div>
                     </div>
                   </div>
-                  <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-soft">
-                    <div className="flex items-center justify-between gap-3">
+                  <div className="rounded-[32px] border border-slate-200 bg-white p-4 shadow-soft sm:p-6">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Collection</p>
                       <span className="text-xs text-slate-500">Activities dated Jan 1 - Jun 19, 2026</span>
                     </div>
-                    <div className="mt-6 grid gap-4 lg:grid-cols-[0.7fr_1.3fr]">
-                      <div className="rounded-3xl border border-slate-200 bg-slate-50 p-10 text-center text-slate-500">
+                    <div className="mt-6 grid gap-4 grid-cols-1 lg:grid-cols-[0.7fr_1.3fr]">
+                      <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 text-center text-slate-500 sm:p-10">
                         <p className="font-semibold text-slate-950">Rate average</p>
                         <p className="mt-5 text-sm">You have no data to display for this period</p>
                       </div>
-                      <div className="rounded-3xl border border-slate-200 bg-slate-50 p-10 text-center text-slate-500">
+                      <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 text-center text-slate-500 sm:p-10">
                         <p className="font-semibold text-slate-950">Monthly</p>
                         <p className="mt-5 text-sm">You have no data to display for this period</p>
                       </div>
@@ -541,26 +571,26 @@ const Dashboard = () => {
             )}
 
             {activeTab === 'feed' && (
-              <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-soft">
+              <section className="rounded-[32px] border border-slate-200 bg-white p-4 shadow-soft sm:p-6">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                   <div>
                     <p className="text-sm uppercase tracking-[0.2em] text-slate-500">Firm Feed</p>
-                    <h2 className="mt-2 text-2xl font-semibold text-slate-950">Firm Feed</h2>
+                    <h2 className="mt-2 text-xl font-semibold text-slate-950 sm:text-2xl">Firm Feed</h2>
                   </div>
-                  <button className="rounded-3xl bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">Filter</button>
+                  <button className="rounded-3xl bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 sm:text-sm">Filter</button>
                 </div>
-                <div className="mt-4 rounded-3xl bg-slate-50 p-4 text-sm text-slate-700">
+                <div className="mt-4 rounded-3xl bg-slate-50 p-4 text-xs text-slate-700 sm:text-sm">
                   Firm Feed now shows the past 14 days by default. Use the Filter menu to adjust the date range.
                 </div>
                 <div className="mt-6 space-y-4">
                   {firmFeedItems.map((item) => (
-                    <div key={item.id} className="flex items-start gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-3xl bg-slate-100 text-sm font-semibold text-slate-700">MR</div>
-                      <div>
+                    <div key={item.id} className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-start">
+                      <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-3xl bg-slate-100 text-sm font-semibold text-slate-700">MR</div>
+                      <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-slate-950">{item.title}</p>
-                        <p className="mt-1 text-sm text-slate-500">{item.subtitle}</p>
+                        <p className="mt-1 text-xs text-slate-500 sm:text-sm">{item.subtitle}</p>
                       </div>
-                      <div className="ml-auto text-sm text-slate-500">{item.extra}</div>
+                      <div className="text-xs text-slate-500 sm:text-sm">{item.extra}</div>
                     </div>
                   ))}
                 </div>
