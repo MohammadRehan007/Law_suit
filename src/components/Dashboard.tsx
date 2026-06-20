@@ -214,8 +214,8 @@ const Dashboard = () => {
                     <span className="sm:hidden">{timerLabel.split(':').slice(1).join(':')}</span>
                   </button>
                   {showTimekeeper && (
-                    <div className="fixed left-4 right-4 top-1/2 z-30 max-h-[80vh] w-auto max-w-lg -translate-y-1/2 transform rounded-[32px] border border-slate-200 bg-white p-4 shadow-2xl sm:left-auto sm:right-4 sm:top-auto sm:translate-y-0 sm:translate-x-0 sm:p-5">
-                      <div className="flex flex-col items-start justify-between gap-3 overflow-y-auto">
+                    <div className="fixed left-4 right-4 top-1/2 z-30 max-h-[80vh] w-auto max-w-lg -translate-y-1/2 transform rounded-[32px] border border-slate-200 bg-white shadow-2xl overflow-y-auto sm:left-auto sm:right-4 sm:top-auto sm:translate-y-0 sm:translate-x-0">
+                      <div className="flex flex-col gap-3 p-4 sm:p-5">
                         <div className="w-full">
                           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Timekeeper</p>
                           <div className="mt-2 flex items-center justify-between gap-3">
