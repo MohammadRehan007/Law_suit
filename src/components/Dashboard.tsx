@@ -214,70 +214,71 @@ const Dashboard = () => {
                     <span className="sm:hidden">{timerLabel.split(':').slice(1).join(':')}</span>
                   </button>
                   {showTimekeeper && (
-                    <div className="fixed left-4 right-4 top-1/2 z-30 max-h-[80vh] w-auto max-w-lg -translate-y-1/2 transform rounded-[32px] border border-slate-200 bg-white shadow-2xl overflow-y-auto sm:left-auto sm:right-4 sm:top-auto sm:translate-y-0 sm:translate-x-0">
-                      <div className="flex flex-col gap-3 p-4 sm:p-5">
-                        <div className="w-full">
-                          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Timekeeper</p>
-                          <div className="mt-2 flex items-center justify-between gap-3">
-                            <p className="text-lg font-semibold text-slate-950">Tracker details</p>
-                            <span className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${trackerStatusClasses}`}>{trackerStatus}</span>
+                    <div className="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/30 p-4 backdrop-blur-sm sm:items-start sm:justify-end sm:p-0" onClick={() => setShowTimekeeper(false)}>
+                      <div className="max-h-[calc(100vh-3rem)] w-full max-w-lg overflow-y-auto rounded-[32px] border border-slate-200 bg-white shadow-2xl sm:mr-4 sm:mt-4" onClick={(event) => event.stopPropagation()}>
+                        <div className="flex flex-col gap-3 p-4 sm:p-5">
+                          <div className="w-full">
+                            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Timekeeper</p>
+                            <div className="mt-2 flex items-center justify-between gap-3">
+                              <p className="text-lg font-semibold text-slate-950">Tracker details</p>
+                              <span className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${trackerStatusClasses}`}>{trackerStatus}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="mt-4 rounded-3xl bg-slate-50 p-4">
-                        <p className="text-sm text-slate-500">Current session</p>
-                        <p className="mt-2 text-xl font-semibold text-slate-950 sm:text-2xl">{timerLabel}</p>
-                        <p className="mt-2 truncate text-sm text-slate-500">{timer.selectedMatter ? matters.find((matter) => matter.id === timer.selectedMatter)?.name : 'No matter selected'}</p>
-                      </div>
-                      <div className="mt-4 space-y-4">
-                        <div>
-                          <label className="text-sm font-medium text-slate-700">Matter</label>
-                          <select
-                            className="mt-2 w-full rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-slate-400 focus:outline-none"
-                            value={timer.selectedMatter || matterOptions[0]?.value || ''}
-                            onChange={(event) => setTimerMatter(event.target.value)}
-                          >
-                            {matterOptions.map((option) => (
-                              <option key={option.value} value={option.value}>{option.label}</option>
-                            ))}
-                          </select>
+                        <div className="mt-4 rounded-3xl bg-slate-50 p-4">
+                          <p className="text-sm text-slate-500">Current session</p>
+                          <p className="mt-2 text-xl font-semibold text-slate-950 sm:text-2xl">{timerLabel}</p>
+                          <p className="mt-2 truncate text-sm text-slate-500">{timer.selectedMatter ? matters.find((matter) => matter.id === timer.selectedMatter)?.name : 'No matter selected'}</p>
                         </div>
-                        <div>
-                          <label className="text-sm font-medium text-slate-700">Description</label>
-                          <input
-                            className="mt-2 w-full rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-slate-400 focus:outline-none"
-                            placeholder="Describe what you’re working on"
-                            value={timer.description}
-                            onChange={(event) => setTimerDescription(event.target.value)}
-                          />
+                        <div className="mt-4 space-y-4">
+                          <div>
+                            <label className="text-sm font-medium text-slate-700">Matter</label>
+                            <select
+                              className="mt-2 w-full rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-slate-400 focus:outline-none"
+                              value={timer.selectedMatter || matterOptions[0]?.value || ''}
+                              onChange={(event) => setTimerMatter(event.target.value)}
+                            >
+                              {matterOptions.map((option) => (
+                                <option key={option.value} value={option.value}>{option.label}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-sm font-medium text-slate-700">Description</label>
+                            <input
+                              className="mt-2 w-full rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-slate-400 focus:outline-none"
+                              placeholder="Describe what you’re working on"
+                              value={timer.description}
+                              onChange={(event) => setTimerDescription(event.target.value)}
+                            />
+                          </div>
                         </div>
-                      </div>
-                      <div className="mt-4 flex flex-wrap gap-3">
-                        <button
-                          className={`rounded-3xl px-4 py-3 text-sm font-semibold text-white shadow-sm ${running ? 'bg-emerald-600 hover:bg-emerald-700' : paused ? 'bg-amber-500 hover:bg-amber-600' : 'bg-slate-950 hover:bg-slate-800'}`}
-                          onClick={() => {
-                            if (running) pauseTimer()
-                            else if (paused) resumeTimer()
-                            else startTimer(timer.selectedMatter || matterOptions[0]?.value || '', timer.description)
-                          }}
-                        >
-                          {running ? 'Pause' : paused ? 'Resume' : 'Start'}
-                        </button>
-                        {timer.activeEntryId && (
+                        <div className="mt-4 flex flex-wrap gap-3 p-4 sm:p-5">
                           <button
-                            className="rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-950 shadow-sm hover:bg-slate-100"
-                            onClick={stopTimer}
+                            className={`rounded-3xl px-4 py-3 text-sm font-semibold text-white shadow-sm ${running ? 'bg-emerald-600 hover:bg-emerald-700' : paused ? 'bg-amber-500 hover:bg-amber-600' : 'bg-slate-950 hover:bg-slate-800'}`}
+                            onClick={() => {
+                              if (running) pauseTimer()
+                              else if (paused) resumeTimer()
+                              else startTimer(timer.selectedMatter || matterOptions[0]?.value || '', timer.description)
+                            }}
                           >
-                            Stop
+                            {running ? 'Pause' : paused ? 'Resume' : 'Start'}
                           </button>
-                        )}
-                        <button
-                          className="rounded-3xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-sm"
-                          onClick={() => {
-                            setShowEntryModal(true)
-                            setShowTimekeeper(false)
-                          }}
-                        >
+                          {timer.activeEntryId && (
+                            <button
+                              className="rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-950 shadow-sm hover:bg-slate-100"
+                              onClick={stopTimer}
+                            >
+                              Stop
+                            </button>
+                          )}
+                          <button
+                            className="rounded-3xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-sm"
+                            onClick={() => {
+                              setShowEntryModal(true)
+                              setShowTimekeeper(false)
+                            }}
+                          >
                           Add manual entry
                         </button>
                       </div>
